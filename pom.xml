@@ -9,7 +9,9 @@
 
     <groupId>com.example</groupId>
     <artifactId>java-maven-app</artifactId>
-    <version>1.0-SNAPSHOT</version>
+
+    <!-- Release version -->
+    <version>1.0</version>
 
     <!-- Java version -->
     <properties>
@@ -30,6 +32,17 @@
         </dependency>
 
     </dependencies>
+
+    <!-- Nexus repository -->
+    <distributionManagement>
+
+        <repository>
+            <id>nexus-app1</id>
+            <name>Nexus Maven App1</name>
+            <url>http://3.108.10.95:8081/repository/maven-app1/</url>
+        </repository>
+
+    </distributionManagement>
 
     <!-- Build configuration -->
     <build>
