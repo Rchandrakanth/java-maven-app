@@ -10,6 +10,7 @@ public class App {
         System.out.println(greet("Chandrakanth"));
         System.out.println(greet("changes made today "));
         System.out.println(greet("changes made  once agaian today "));
+        System.out.println(greet("new changes made  today "));
     }
 }
 
