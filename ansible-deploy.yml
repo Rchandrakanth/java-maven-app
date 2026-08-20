@@ -1,0 +1,40 @@
+---
+- name: deploying java application
+  hosts: agents
+  become: yes
+
+  vars:
+    region: ap-south-1
+    ecr_registry: "334624056997.dkr.ecr.ap-south-1.amazonaws.com/java-maven-app"
+    image_name: "java-maven-app"
+
+
+  tasks:
+  - name: login to ecr
+    ansible.builtin.shell:
+      cmd: aws ecr get-login-password --region "{{ region }}" | docker login --username AWS --password-stdin "{{ ecr_registry }}"
+
+  - name: pulling the image from the ecr
+    ansible.builtin.command:
+      cmd: docker pull "{{ ecr_registry }}/{{ image_name }}:{{ lookup('env', 'BUILD_NUMBER') }}"
+
+  - name: stoping the old container
+    ansible.builtin  .command:
+      cmd: docker stop java-maven-app
+    ignore_errors: yes
+
+  - name:  removing the previous container
+    ansible.builtin.command:
+      cmd: docker rm java-maven-app
+    ignore_errors: yes
+
+  - name: running teh docker container to disply the contents in java-maven-app
+    ansible.builtin.command:
+      cmd: docker run -d --name java-maven-app "{{ ecr_registry }}/{{ image_name }}:{{ lookup('env', 'BUILD_NUMBER') }}"
+
+  - name: checking the running process
+    ansible.builtin.command:
+      cmd: docker ps -a
+
+
+
