@@ -5,7 +5,7 @@
 
   vars:
     region: ap-south-1
-    ecr_registry: "334624056997.dkr.ecr.ap-south-1.amazonaws.com/java-maven-app"
+    ecr_registry: "334624056997.dkr.ecr.ap-south-1.amazonaws.com"
     image_name: "java-maven-app"
 
 
@@ -19,7 +19,7 @@
       cmd: docker pull "{{ ecr_registry }}/{{ image_name }}:{{ lookup('env', 'BUILD_NUMBER') }}"
 
   - name: stoping the old container
-    ansible.builtin  .command:
+    ansible.builtin.command:
       cmd: docker stop java-maven-app
     ignore_errors: yes
 
