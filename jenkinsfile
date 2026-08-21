@@ -1,0 +1,73 @@
+pipeline {
+    agent none
+    
+    stages {
+        stage('git checkout') {
+            agent {
+                label 'maven'
+            }
+            steps {
+                checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'github-ssh-key',
+                url: 'git@github.com:Rchandrakanth/java-maven-app.git']])
+                
+            }
+        }
+         stage('cleaning old executable file using maven') {
+            agent {
+                label 'maven'
+            }
+            steps {
+                sh 'mvn clean'
+            }
+        }
+        stage('creating the jar file') {
+            agent {
+                label 'maven'
+            }
+            steps {
+                sh 'mvn package'
+                sh 'ls -lah target/'
+                stash name: 'docker-files', includes: 'Dockerfile,target/*.jar'
+                stash name: 'ansible-files', includes: 'inventory.ini,ansible-deploy.yml'
+            }
+        }
+        stage('docker login and image building') {
+            agent {
+                label 'docker'
+            }
+            steps {
+                unstash 'docker-files'
+                 sh 'ls -lah target/'
+                
+                echo "logging to the ECR"
+                sh '''
+                    aws ecr get-login-password --region ap-south-1 | docker login --username AWS \
+                    --password-stdin 334624056997.dkr.ecr.ap-south-1.amazonaws.com 
+                '''
+                echo "building the docker image"
+                sh '''
+                    docker build -t java-maven-app:${BUILD_NUMBER} .
+                '''
+                echo "taging the docker image"
+                sh '''
+                    docker tag java-maven-app:${BUILD_NUMBER} 334624056997.dkr.ecr.ap-south-1.amazonaws.com/java-maven-app:${BUILD_NUMBER}
+                '''
+                echo "pushing to the docker image to ecr"
+                sh '''
+                    docker push 334624056997.dkr.ecr.ap-south-1.amazonaws.com/java-maven-app:${BUILD_NUMBER}
+                '''
+            }
+        }
+        stage('pulling image from ecr and run the docker container in jenkins agent ansible') {
+            agent {
+                label 'ansible'
+            }
+            steps {
+                unstash 'ansible-files'
+                sh 'ansible-playbook -i inventory.ini ansible-deploy.yml'
+            }
+        }
+        
+    }
+}
+
